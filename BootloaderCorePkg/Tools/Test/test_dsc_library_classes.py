@@ -148,8 +148,27 @@ def test_detects_missing_library_class_mapping (workspace, tmp_path):
     assert any ('LoaderPerformanceLib' in err for err in errors), errors
 
 
-def test_missing_include_is_reported_not_ignored (workspace):
-    """BootloaderCorePkg.dsc without a Platform.dsc must not silently pass."""
+def test_missing_include_is_reported_not_ignored (workspace, tmp_path):
+    """An !include that cannot be resolved must be reported, never skipped.
+
+    This is deliberately written against a synthetic DSC rather than against
+    BootloaderCorePkg.dsc.  That file includes the generated Platform.dsc,
+    which is gitignored: it is absent in a fresh clone but present the moment
+    anyone runs a build or the board checker.  Asserting on the real file made
+    the result depend on whether the developer had built before, which is
+    exactly the kind of flaky, environment-dependent test that stops people
+    trusting the suite.
+    """
+    dsc = tmp_path / 'Synthetic.dsc'
+    dsc.write_text (
+        '[Defines]\n'
+        '!include NoSuchDirectory/DefinitelyMissing.dsc\n'
+        '[LibraryClasses]\n'
+        '  BaseLib|MdePkg/Library/BaseLib/BaseLib.inf\n',
+        encoding='utf-8')
+
     checker = Chk.Checker (workspace)
-    _, stats = checker.check_dsc ('BootloaderCorePkg/BootloaderCorePkg.dsc')
-    assert 'Platform.dsc' in stats['missing_includes']
+    _, stats = checker.check_dsc (str (dsc))
+
+    assert any ('DefinitelyMissing.dsc' in inc for inc in stats['missing_includes']), \
+        'unresolved !include was silently ignored: %s' % stats['missing_includes']
