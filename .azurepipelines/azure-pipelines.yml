@@ -61,6 +61,10 @@ jobs:
 
 - job: QEMU
 
+  # Wait for the fast static checks. A broken library class mapping should
+  # fail in about a minute instead of consuming the whole board matrix.
+  dependsOn: UnitTests
+
   pool:
     vmImage: 'ubuntu-24.04'
 
@@ -100,6 +104,8 @@ jobs:
 
 
 - job: Linux
+
+  dependsOn: UnitTests
 
   strategy:
     matrix:
@@ -216,6 +222,8 @@ jobs:
     displayName: 'Run $(Build.Name) build'
 
 - job: Windows
+
+  dependsOn: UnitTests
 
   strategy:
     matrix:
@@ -449,6 +457,8 @@ jobs:
     displayName: 'Run $(Build.Name) build'
 
 - job: Linux_CLANG
+
+  dependsOn: UnitTests
 
   strategy:
     matrix:
