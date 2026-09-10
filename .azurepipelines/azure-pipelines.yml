@@ -15,6 +15,50 @@ pr:
 jobs:
 
 
+- job: UnitTests
+
+  displayName: Unit tests and static checks
+
+  pool:
+    vmImage: 'ubuntu-24.04'
+
+  steps:
+  - checkout: self
+    submodules: recursive
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.8.x'
+      architecture: 'x64'
+    displayName: Set Python version
+
+  - script: |
+      python -m pip install --upgrade pip
+      python -m pip install pytest
+    displayName: 'Install test prerequisites'
+
+  # Resolves library classes for every DSC and every board without invoking a
+  # compiler. Catches a missing [LibraryClasses] mapping that would otherwise
+  # only fail for the board/DSC combinations the build matrix happens to cover.
+  - script: |
+      python BootloaderCorePkg/Tools/CheckDscLibraryClasses.py --all-boards
+    displayName: 'Check DSC library classes'
+
+  - script: |
+      python -m pytest BootloaderCorePkg/Tools/Test -q
+    displayName: 'Run Python tool unit tests'
+
+  # PayloadPkg.dsc is not built by the board matrix. Building it standalone is
+  # what a developer does when following the "add a new payload" guide.
+  - bash: |
+      sudo apt-get update
+      sudo apt-get install -y nasm uuid-dev iasl
+    displayName: 'Install build tools'
+
+  - script: |
+      python BuildLoader.py build_dsc -p PayloadPkg/PayloadPkg.dsc
+    displayName: 'Build PayloadPkg.dsc standalone'
+
+
 - job: QEMU
 
   pool:
