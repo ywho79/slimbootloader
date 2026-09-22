@@ -26,6 +26,7 @@
   BaseLib
   BaseMemoryLib
   BootloaderCommonLib
+  BootloaderLib
   PayloadEntryLib
   SerialPortLib
   ConsoleInLib
@@ -36,6 +37,9 @@
 
 
 [Guids]
+  gLoaderPlatformInfoGuid
+  gLoaderMemoryMapInfoGuid
+  gLoaderPerformanceInfoGuid
 
 [Pcd]
 
